@@ -85,3 +85,16 @@ First vagrant ssh inside the VM, then:
   virtctl console testvm
   ```
 
+## Testing on real OS
+
+The scripts may be used, in the same order, to deploy a cluster on an (non-virtualized)
+Ubuntu 18.04 Server machine.
+
+So far, only limitation found is related to AppArmor libvirt constraints preventing VMs to be
+started by KubeVirt.
+
+Immediate workaround can be disabling it (which may not be the best
+idea, YMMV):
+```
+sudo ln -s /etc/apparmor.d/usr.sbin.libvirtd /etc/apparmor.d/disable/usr.sbin.libvirtd
+```
