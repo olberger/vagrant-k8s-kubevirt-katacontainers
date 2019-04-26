@@ -23,81 +23,6 @@ GROWPART = ENV['GROWPART'] || "true"
 # Minikube Variables
 KUBERNETES_VERSION = ENV['KUBERNETES_VERSION'] || "1.14.0"
 
-# Common installation script
-$installer = <<SCRIPT
-#!/bin/bash
-
-# Update apt and get dependencies
-sudo apt-get -y update
-sudo apt-mark hold grub 
-sudo apt-mark hold grub-pc
-sudo apt-get -y upgrade
-sudo apt-get install -y zip unzip curl wget socat ebtables git vim 
-
-SCRIPT
-
-$dockerold = <<SCRIPT
-#!/bin/bash
-
-#curl -fsSL https://apt.dockerproject.org/gpg | sudo apt-key add -
-#sudo apt-add-repository "deb https://apt.dockerproject.org/repo ubuntu-xenial main"
-#sudo apt-get install -y docker-engine=17.03.1~ce-0~ubuntu-xenial
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get -y update
-sudo apt-get install -y docker-ce=17.03.3~ce-0~ubuntu-$(lsb_release -cs)
-sudo systemctl start docker
-
-sudo usermod -a -G docker vagrant
-
-SCRIPT
-
-$docker = <<SCRIPT
-#!/bin/bash
-
-# source: https://kubernetes.io/docs/setup/cri/#docker
-
-# Install Docker CE
-## Set up the repository:
-### Install packages to allow apt to use a repository over HTTPS
-sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-
-### Add Docker’s official GPG key
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-### Add Docker apt repository.
-sudo add-apt-repository \
-  "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) \
-  stable"
-
-## Install Docker CE.
-sudo apt-get update && sudo apt-get install -y docker-ce=18.06.2~ce~3-0~ubuntu
-
-# Setup daemon.
-cat <<EOF > /tmp/docker-daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-EOF
-sudo mv /tmp/docker-daemon.json /etc/docker/daemon.json
-
-sudo mkdir -p /etc/systemd/system/docker.service.d
-
-# Restart docker.
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-
-
-sudo usermod -a -G docker vagrant
-
-SCRIPT
 
 $growpart = <<SCRIPT
 #!/bin/bash
@@ -145,88 +70,7 @@ sudo systemctl start crio
 
 SCRIPT
 
-$minikubescript = <<SCRIPT
-#!/bin/bash
-
-#Install minikube
-echo "Downloading Minikube"
-curl -q -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 2>/dev/null
-chmod +x minikube 
-sudo mv minikube /usr/local/bin/
-
-#Install kubectl
-echo "Downloading Kubectl"
-curl -q -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl 2>/dev/null
-chmod +x kubectl 
-sudo mv kubectl /usr/local/bin/
-
-# Install crictl
-curl -qL https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-amd64.tar.gz 2>/dev/null | tar xzvf -
-chmod +x crictl
-sudo mv crictl /usr/local/bin/
-
-#Install stern
-# TODO: Check sha256sum
-echo "Downloading Stern"
-curl -q -Lo stern https://github.com/wercker/stern/releases/download/1.10.0/stern_linux_amd64 2>/dev/null                                                                                 
-chmod +x stern
-sudo mv stern /usr/local/bin/
-
-#Install kubecfg
-# TODO: Check sha256sum
-echo "Downloading Kubecfg"
-curl -q -Lo kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.9.0/kubecfg-linux-amd64 2>/dev/null                                                      
-chmod +x kubecfg
-sudo mv kubecfg /usr/local/bin/
-
-#Setup minikube
-echo "127.0.0.1 minikube minikube." | sudo tee -a /etc/hosts
-mkdir -p $HOME/.minikube
-mkdir -p $HOME/.kube
-touch $HOME/.kube/config
-
-export KUBECONFIG=$HOME/.kube/config
-
-# Permissions
-sudo chown -R $USER:$USER $HOME/.kube
-sudo chown -R $USER:$USER $HOME/.minikube
-
-export MINIKUBE_WANTUPDATENOTIFICATION=false
-export MINIKUBE_WANTREPORTERRORPROMPT=false
-export MINIKUBE_HOME=$HOME
-export CHANGE_MINIKUBE_NONE_USER=true
-export KUBECONFIG=$HOME/.kube/config
-
-# Disable SWAP since is not supported on a kubernetes cluster
-sudo swapoff -a
-
-# ## Start minikube 
-sudo -E minikube start -v 4 --vm-driver none --kubernetes-version v${KUBERNETES_VERSION} --container-runtime=cri-o --bootstrapper kubeadm 
-# sudo -E minikube start -v 4 --vm-driver none --kubernetes-version v${KUBERNETES_VERSION} --container-runtime=cri-o
-
-# ## Addons 
-# sudo -E minikube addons  enable ingress
-
-# ## Configure vagrant clients dir
-
-# printf "export MINIKUBE_WANTUPDATENOTIFICATION=false\n" >> /home/vagrant/.bashrc
-# printf "export MINIKUBE_WANTREPORTERRORPROMPT=false\n" >> /home/vagrant/.bashrc
-# printf "export MINIKUBE_HOME=/home/vagrant\n" >> /home/vagrant/.bashrc
-# printf "export CHANGE_MINIKUBE_NONE_USER=true\n" >> /home/vagrant/.bashrc
-# printf "export KUBECONFIG=/home/vagrant/.kube/config\n" >> /home/vagrant/.bashrc
-# printf "source <(kubectl completion bash)\n" >> /home/vagrant/.bashrc
-
-# # Permissions
-# sudo chown -R $USER:$USER $HOME/.kube
-# sudo chown -R $USER:$USER $HOME/.minikube
-
-# # Enforce sysctl 
-# sudo sysctl -w vm.max_map_count=262144
-# sudo echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.d/90-vm_max_map_count.conf
-
-SCRIPT
-
-# source: https://www.avthart.com/posts/create-your-own-minikube-using-vagrant-and-kubeadm/ / https://gist.github.com/avthart/d050b13cad9e5a991cdeae2bf43c2ab3
+# adapted from: https://www.avthart.com/posts/create-your-own-minikube-using-vagrant-and-kubeadm/ / https://gist.github.com/avthart/d050b13cad9e5a991cdeae2bf43c2ab3
 $kubernetes = <<-SCRIPT
 # Kubelet requires swap off (after reboot):
 sudo swapoff -a
@@ -391,13 +235,9 @@ def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
     override.vm.synced_folder srcdir, dstdir, type: 'virtualbox', create: true
   end
 
-  # ensure docker is installed # Use our script so we can get a proper support version
-#  vmCfg.vm.provision "shell", inline: $docker, privileged: false 
   # Script to prepare the VM
-#  vmCfg.vm.provision "shell", inline: $installer, privileged: false 
   vmCfg.vm.provision "shell", inline: $growpart, privileged: false if GROWPART == "true"
   vmCfg.vm.provision "shell", inline: $crio, privileged: false 
-#  vmCfg.vm.provision "shell", inline: $minikubescript, privileged: false, env: {"KUBERNETES_VERSION" => KUBERNETES_VERSION}
   vmCfg.vm.provision "shell", inline: $kubernetes, privileged: false 
   vmCfg.vm.provision "shell", inline: $kubevirt, privileged: false 
   return vmCfg
