@@ -271,7 +271,7 @@ sudo kubeadm config images pull
 # # Install using kubeadm 
 IPADDR=`sudo ifconfig eth0 | grep Mask | awk '{print $2}'| cut -f2 -d:`
 NODENAME=$(hostname -s)
-sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME
+sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --pod-network-cidr=10.244.0.0/16
 #sudo kubeadm init
 
 # Copy admin credentials to vagrant user
@@ -286,6 +286,8 @@ sudo chown vagrant:vagrant /home/vagrant/.kube/config
 # kubectl apply -f \
 # https://docs.projectcalico.org/v3.4/getting-started/kubernetes/installation/hosted/etcd.yaml
 # kubectl apply -f \ https://docs.projectcalico.org/v3.4/getting-started/kubernetes/installation/hosted/calico.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml
 
 # # get componentstats
 kubectl get componentstatus
