@@ -52,7 +52,7 @@ end
 
 def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
 
-  vmCfg.vm.box = "roboxes/ubuntu1604"
+  vmCfg.vm.box = "roboxes/ubuntu1804"
   
   vmCfg.vm.hostname = hostname
   vmCfg.vm.network "private_network", type: "dhcp",  :model_type => "virtio", :autostart => true

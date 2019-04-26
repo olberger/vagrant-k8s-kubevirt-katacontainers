@@ -22,7 +22,8 @@ sudo add-apt-repository -y ppa:projectatomic/ppa && sudo apt-get update
 
 # Install CRI-O
 #sudo apt-get install -y cri-o-1.11
-sudo apt-get install -y cri-o-1.12
+#sudo apt-get install -y cri-o-1.12
+sudo apt-get install -y cri-o-1.13
 
 sudo systemctl start crio
 
