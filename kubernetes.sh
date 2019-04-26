@@ -87,9 +87,9 @@ sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --c
 
 
 # Copy admin credentials to vagrant user
-mkdir -p /home/vagrant/.kube
-sudo cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-sudo chown vagrant:vagrant /home/vagrant/.kube/config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $USER:$USER $HOME/.kube/config
 
 # remove master role taint
 kubectl taint nodes --all node-role.kubernetes.io/master-
