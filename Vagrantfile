@@ -87,6 +87,8 @@ def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
   vmCfg.vm.provision "shell", path: "crio.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kubernetes.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kubevirt.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
   return vmCfg
 end
 

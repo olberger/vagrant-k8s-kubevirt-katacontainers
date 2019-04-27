@@ -99,11 +99,12 @@ echo "Deploy calico network"
 kubectl apply -f https://docs.projectcalico.org/v3.6/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
 
 # wait until calico is stated
+echo "wait for 30s before checking if calico is started"
+sleep 30
+
 echo "wait for calico to be started"
 kubectl wait --timeout=180s --for=condition=Ready -n kube-system pod -l k8s-app=calico-kube-controllers
+kubectl wait --timeout=180s --for=condition=Ready -n kube-system pod -l k8s-app=calico-node
 
 # get componentstats
 kubectl get componentstatus
-
-# get all resources
-#kubectl get all --all-namespaces

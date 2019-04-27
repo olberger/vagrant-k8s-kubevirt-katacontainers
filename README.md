@@ -1,18 +1,21 @@
-# Kubernetes with kubevirt inside Vagrant (with libvirt/kvm)
+# Kubernetes with kubevirt and kata-containers, inside Vagrant (with libvirt/kvm)
 
-Provide a consistent way to run kubernetes with kubevirt locally across different distro's, providing nested virtualization is supported..
+Provide a consistent way to run kubernetes with kubevirt and
+kata-containers, locally across different distro's, providing nested virtualization is supported..
 
-Note, this installs Kubernetes from official packages on ubuntu 16.04.
+Note, this installs Kubernetes from official packages on ubuntu 18.04.
 
 Include configuration for :
 
 # Details
-- Ubuntu 16.04 base image : roboxes/ubuntu1604 (from https://roboxes.org/ ?)
+- Ubuntu 18.04 base image : roboxes/ubuntu1604 (from https://roboxes.org/ ?)
 - Kubernetes installed with kubeadm, with :
   - cri-o container runtime
   - kubelet, cri-o using systemd cgroups driver
   - calico CNI network
-  - kubevirt
+  - kubevirt for running full-fledged qemu VMs
+  - kata-containers for running containers, sandboxed inside mini VMs
+    (qemu too)
 
 This is a reworked Vagrant configuration based on initial version at https://github.com/mintel/vagrant-minikube taking additions from https://gist.github.com/avthart/d050b13cad9e5a991cdeae2bf43c2ab3 and my own findings
 
@@ -65,7 +68,7 @@ First vagrant ssh inside the VM, then:
 
 - Declare a Kubevirt virtual machine to be started with qemu/kvm:
   ```
-  vagrant$ kubectl apply -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml
   ...
   kubectl get vms
   ```
@@ -84,6 +87,19 @@ First vagrant ssh inside the VM, then:
   ```
   virtctl console testvm
   ```
+
+## Kata-containers
+
+You can also test, from inside the VM, the launch of containers inside
+qemu sandboxing:
+```
+kubectl apply -f https://raw.githubusercontent.com/kata-containers/packaging/master/kata-deploy/examples/test-deploy-kata-qemu.yaml
+```
+
+Once the container is running, you can run a shell inside it:
+```
+kubectl exec -it $(kubectl get pod -l run=php-apache-kata-qemu -o wide | awk 'NR==2 {print $1}') bash
+```
 
 ## Testing on real OS
 
