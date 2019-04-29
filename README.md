@@ -22,7 +22,7 @@ This is a reworked Vagrant configuration based on initial version at https://git
 ## Demo
 
 Here's a recording :
-[![asciicast](https://asciinema.org/a/243325.png)](https://asciinema.org/a/14)
+[![asciicast](https://asciinema.org/a/243325.png)](https://asciinema.org/a/243325)
 
 ## Install Pre-requisites
 
