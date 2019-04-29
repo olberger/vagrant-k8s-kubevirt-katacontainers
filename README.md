@@ -19,6 +19,11 @@ Include configuration for :
 
 This is a reworked Vagrant configuration based on initial version at https://github.com/mintel/vagrant-minikube taking additions from https://gist.github.com/avthart/d050b13cad9e5a991cdeae2bf43c2ab3 and my own findings
 
+## Demo
+
+Here's a recording :
+[![asciicast](https://asciinema.org/a/243325.png)](https://asciinema.org/a/14)
+
 ## Install Pre-requisites
 
 Ensure you have vagrant installed (should also support mac/windows), with libvirt/KVM virtualization driver
