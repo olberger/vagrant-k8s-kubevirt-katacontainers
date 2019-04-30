@@ -1,0 +1,51 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachineInstance
+metadata:
+  name: testvm1
+spec:
+      domain:
+        cpu:
+          cores: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: test-datavolume
+          - name: cloudinitvolume
+            cdrom:
+              bus: virtio
+        resources:
+          requests:
+            memory: 512M
+      volumes:
+      - dataVolume:
+          name: fedora28-dv
+        name: test-datavolume
+      - cloudInitNoCloud:
+          userData: |
+            #cloud-config
+            hostname: testvm1
+            users:
+              - name: shadowman
+                gecos: KubeVirt Project
+                sudo: ALL=(ALL) NOPASSWD:ALL
+                passwd: $1$SaltSalt$JTGvFHUx8L0/zris1k3CT.
+                shell: /bin/bash
+                home: /home/shadowman
+                lock_passwd: false
+        name: cloudinitvolume
+---
+apiVersion: cdi.kubevirt.io/v1alpha1
+kind: DataVolume
+metadata:
+        name: fedora28-dv
+spec:
+        pvc:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+        source:
+          http:
+            url: "https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.raw.xz"
