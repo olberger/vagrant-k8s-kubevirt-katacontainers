@@ -1,0 +1,59 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachineInstance
+metadata:
+  name: testvmubuntu1804
+spec:
+      domain:
+        cpu:
+          cores: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: test-datavolume
+          - name: cloudinitvolume
+            cdrom:
+              bus: virtio
+        resources:
+          requests:
+            memory: 512M
+      volumes:
+      - dataVolume:
+          name: ubuntu1804-dv
+        name: test-datavolume
+      - cloudInitNoCloud:
+          userData: |
+            #cloud-config
+            hostname: ubuntu1804
+            users:
+              - name: shadowman
+                gecos: KubeVirt Project
+                sudo: ALL=(ALL) NOPASSWD:ALL
+                passwd: $1$SaltSalt$JTGvFHUx8L0/zris1k3CT.
+                shell: /bin/bash
+                home: /home/shadowman
+                lock_passwd: false
+          networkData: |
+            network:
+              version: 1
+              config:
+              - type: physical
+              name: enp1s0
+              subnets:
+                - type: dhcp
+        name: cloudinitvolume
+---
+apiVersion: cdi.kubevirt.io/v1alpha1
+kind: DataVolume
+metadata:
+        name: ubuntu1804-dv
+spec:
+        pvc:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+        source:
+          http:
+            url: "http://cloud-images.ubuntu.com/releases/18.04/release/ubuntu-18.04-server-cloudimg-amd64.tar.gz"
