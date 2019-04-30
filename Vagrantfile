@@ -98,7 +98,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vbguest.auto_update = false
 
   1.upto(NODES.to_i) do |i|
-    hostname = "minikube-vagrant-%02d" % [i]
+    hostname = "kubernetes-vagrant-%02d" % [i]
     cpus = CPUS
     mem = MEM
     srcdir = SRCDIR
