@@ -1,9 +1,10 @@
 #!/bin/bash
 
 echo "Deploy kubevirt"
-export KUBEVIRT_RELEASE=v0.15.0
-kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_RELEASE/kubevirt-operator.yaml
-kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_RELEASE/kubevirt-cr.yaml
+export KUBEVIRT_RELEASE=$(curl --silent "https://api.github.com/repos/kubevirt/kubevirt/releases/latest" | grep '"tag_name":'| sed -E 's/.*"([^"]+)".*/\1/')
+#kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_RELEASE/kubevirt-operator.yaml
+#kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_RELEASE/kubevirt-cr.yaml
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_RELEASE}/kubevirt.yaml
 
 curl -s -Lo virtctl \
     https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_RELEASE}/virtctl-${KUBEVIRT_RELEASE}-linux-amd64
@@ -12,5 +13,5 @@ sudo mv virtctl /usr/local/bin/
 
 # wait until kubevirt is stated
 echo "wait for kubevirt to be started"
-kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l operator.kubevirt.io=virt-operator
+kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l kubevirt.io=virt-handler
 
