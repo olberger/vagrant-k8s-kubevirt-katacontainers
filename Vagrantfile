@@ -89,6 +89,10 @@ def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
   vmCfg.vm.provision "shell", path: "kubevirt.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "rancher-local-path-provisioner.sh", privileged: false
+  vmCfg.vm.provision "shell", path: "cdi.sh", privileged: false
+#  vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
+#  vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
   return vmCfg
 end
 
