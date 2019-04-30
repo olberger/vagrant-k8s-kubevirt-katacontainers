@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachineInstance
 metadata:
-  name: testvm1
+  name: testvmfedora29
 spec:
       domain:
         cpu:
@@ -19,7 +19,7 @@ spec:
             memory: 512M
       volumes:
       - dataVolume:
-          name: fedora28-dv
+          name: fedora29-dv
         name: test-datavolume
       - cloudInitNoCloud:
           userData: |
@@ -33,12 +33,20 @@ spec:
                 shell: /bin/bash
                 home: /home/shadowman
                 lock_passwd: false
+          networkData: |
+            network:
+              version: 1
+              config:
+              - type: physical
+              name: eth0
+              subnets:
+                - type: dhcp
         name: cloudinitvolume
 ---
 apiVersion: cdi.kubevirt.io/v1alpha1
 kind: DataVolume
 metadata:
-        name: fedora28-dv
+        name: fedora29-dv
 spec:
         pvc:
           accessModes:
@@ -48,4 +56,4 @@ spec:
               storage: 10Gi
         source:
           http:
-            url: "https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.raw.xz"
+            url: "https://download.fedoraproject.org/pub/fedora/linux/releases/29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.raw.xz"
