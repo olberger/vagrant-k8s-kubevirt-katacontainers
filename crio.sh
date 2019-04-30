@@ -2,8 +2,8 @@
 
 # source: https://kubernetes.io/docs/setup/cri/#prerequisites
 
-modprobe overlay
-modprobe br_netfilter
+sudo modprobe overlay
+sudo modprobe br_netfilter
 
 # Setup required sysctl params, these persist across reboots.
 cat > /tmp/99-kubernetes-cri.conf <<EOF
