@@ -34,13 +34,10 @@ spec:
                 home: /home/shadowman
                 lock_passwd: false
           networkData: |
-            network:
-              version: 1
-              config:
-              - type: physical
-              name: enp1s0
-              subnets:
-                - type: dhcp
+            version: 2
+            ethernets:
+              enp1s0:
+                dhcp4: true
         name: cloudinitvolume
 ---
 apiVersion: cdi.kubevirt.io/v1alpha1
