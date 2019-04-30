@@ -81,7 +81,7 @@ sudo kubeadm config images pull --cri-socket=/var/run/crio/crio.sock
 
 echo "Create cluster"
 # Install using kubeadm 
-IPADDR=`sudo ifconfig eth0 | grep Mask | awk '{print $2}'| cut -f2 -d:`
+IPADDR=`sudo ifconfig eth0 | grep netmask | awk '{print $2}'| cut -f2 -d:`
 NODENAME=$(hostname -s)
 sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --cri-socket=/var/run/crio/crio.sock --pod-network-cidr=192.168.0.0/16
 
