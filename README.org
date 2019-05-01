@@ -1,0 +1,277 @@
+#+TITLE: Kubernetes with kubevirt and kata-containers, inside Vagrant (with libvirt/kvm)
+
+Provide a consistent way to run [[https://kubernetes.io/][Kubernetes]]
+(k8s) with [[https://kubevirt.io/][KubeVirt]] and
+[[https://katacontainers.io/][Kata Containers]], locally, provided
+[[#nestedvirt][nested virtualization]] is supported.
+
+Note, this installs Kubernetes from "official" (from k8s) packages on
+Ubuntu 18.04, via kubeadm (and not minikube or another installer)
+
+If this works well inside Vagrant, in principle, the same
+provisionning scripts could be used for installation of a similar
+cluster on a base operating system installed with Ubuntu.
+
+* Features
+
+Include configuration for :
+
+- the Ubuntu 18.04 Vagrant base image : =generic/ubuntu1804= (from
+  https://roboxes.org/) run inside qemu/kvm
+- *Kubernetes* [[file:kubernetes.sh][installed]] with =kubeadm=, with :
+  - the [[https://cri-o.io/][cri-o]] container runtime (other options
+    may be possible)
+  - and kubelet and cri-o configured the same way, for using the systemd cgroups driver
+  - the [[https://www.projectcalico.org/][Calico]] CNI network system
+    (other options may be possible)
+  - Rancher's [[https://github.com/rancher/local-path-provisioner][Local Path Provisioner]] 
+    to automatically allocate PersistentVolumes from a directory of
+    the node's file-system
+  - [[https://kubevirt.io/][KubeVirt]] for deploying full-fledged
+    *cloud VMs* on the cluster via qemu/kvm (in a similar way to IaaS clouds)
+  - the [[https://github.com/kubevirt/containerized-data-importer][Containerized Data Importer]] 
+    for KubeVirt, to handle automatic import of VM images
+  - [[https://katacontainers.io/][Kata Containers]] for running *PODs/containers*, sandboxed inside mini VMs
+    (qemu too)
+
+This is a reworked Vagrant setup, based on an initial version at
+https://github.com/mintel/vagrant-minikube, taking additions from
+https://gist.github.com/avthart/d050b13cad9e5a991cdeae2bf43c2ab3 and my
+own findings.
+
+* Demo
+
+Here's a recording of the Vagrant provisionning of the cluster :
+[[https://asciinema.org/a/243325][[[https://asciinema.org/a/243325.png]]]]
+
+* Starting the cluster inside Vagrant
+
+** Install Pre-requisites
+
+*** Support for nested virtualization
+:PROPERTIES:
+:CUSTOM_ID: nestedvirt
+:END:
+
+For this to work, you need to have a base hardware whose CPUs provide
+virtualization support allowing "nested virtualization". As we will
+run qemu/kvm VMs inside the qemu/kvm base started by Vagrant, this
+support is essential.
+
+- Check that you have support for this in your CPU
+- Check that the KVM modules are configured to allow it
+
+*** Vagrant
+
+Ensure you have vagrant installed, with its libvirt/KVM virtualization
+driver
+
+https://www.vagrantup.com/docs/installation/
+
+You may install it using your distribution's packages :
+**** Arch
+
+#+BEGIN_src sh
+    sudo pacman -S vagrant
+#+END_src
+
+**** Ubuntu
+
+#+BEGIN_src sh
+    sudo apt-get install vagrant
+#+END_src
+
+** Run it
+
+Clone this repo, then:
+
+#+BEGIN_src sh
+    vagrant up --provider=libvirt
+#+END_src
+
+The long provisionning process will occur.
+
+** SSH into the VM
+
+Once the provisionning ends, it's ready.
+
+You'll perform most of the work inside the Vagrant VM:
+
+#+BEGIN_src sh
+    vagrant ssh
+#+END_src
+
+** Check the k8s cluster is up and running
+
+#+BEGIN_src sh
+    kubectl get nodes
+#+END_src
+
+** Access your code inside the VM
+
+We automatically mount =/tmp/vagrant= into =/home/vagrant/data=.
+
+For example, you may want to =git clone= some kubernetes manifests into
+=/tmp/vagrant= on your host-machine, then you can access them in the
+vagrant machine.
+
+This is bi-directional, and achieved via
+[[https://github.com/dustymabe/vagrant-sshfs][vagrant-sshfs]]
+
+* Deploy stuff on the cluster
+
+Once the k8s cluster is running you may test deployment of virtualized
+applications and systems.
+
+** Testing "regular cloud VMs" via KubeVirt
+   :PROPERTIES:
+   :CUSTOM_ID: testing-kubevirt-qemu-vm-images-inside-kubernetes-cluster
+   :END:
+
+*** Basic VM instances
+
+- declare a Kubevirt virtual machine to be started with qemu/kvm:
+
+  #+BEGIN_src sh
+      kubectl apply -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml
+      ...
+      kubectl get vms
+  #+END_src
+
+- start the VM's execution (takes a while: downloading VM image, etc.)
+
+  #+BEGIN_src sh
+      virtctl start testvm
+
+      # wait until the VM is started
+      kubectl wait --timeout=180s --for=condition=Ready pod -l kubevirt.io/domain=testvm
+      # you can check the execution of qemu
+      ps aux | grep qemu-system-x86_64
+  #+END_src
+
+- connect to the VM's console
+
+  #+BEGIN_src sh
+      virtctl console testvm
+  #+END_src
+
+  it may take a while to get messages on the console, and eventually a
+  login prompt (press ENTER if need be)
+
+*** Testing automatic VM image import with DataVolumes
+
+We have prepared a few [[file:examples-kubevirt/][deployment
+manifests]] to test booting VMs from boot disk images specified from
+URLs.
+
+Example with a Fedora machine
+
+- copy the
+  [[file:examples-kubevirt/fedora-datavolume.yaml][=fedora-datavolume.yaml=
+  manifest]] into the cluster host inside Vagrant:
+  #+BEGIN_src sh
+    cp examples-kubevirt/fedora-datavolume.yaml /tmp/vagrant
+  #+END_src
+
+  it will be available in =~vagrant/data/fedora-datavolume.yaml=
+
+- connect via =vagrant ssh=, and: 
+
+  - create the
+    [[https://github.com/kubevirt/user-guide/blob/master/creating-virtual-machines/disks-and-volumes.adoc#dataVolume][DataVolume]]
+    and [[https://kubevirt.io/user-guide/docs/latest/creating-virtual-machines/intro.html][VM Instance]] 
+    definitions:
+    #+BEGIN_SRC sh
+    kubectl create -f data/fedora-datavolume.yaml
+    #+END_SRC
+
+  - check that the DataVolume was created:
+    #+BEGIN_SRC sh
+    kubectl get dv
+    #+END_SRC
+    #+BEGIN_EXAMPLE
+      NAME        AGE 
+      fedora28-dv 4m58s
+    #+END_EXAMPLE
+
+  - check that the corresponding /PersistentVolume Claim/ was allocated (automatically, thanks to the /Local Path Provisioner/):
+    #+BEGIN_SRC sh
+    kubectl get pvc
+    #+END_SRC
+    #+BEGIN_EXAMPLE
+     NAME        STATUS VOLUME                                   CAPACITY ACCESS MODES STORAGECLASS AGE 
+     fedora28-dv Bound  pvc-b2bc560a-6b88-11e9-a6b2-525400a08028 10Gi     RWO          local-path   5m21s
+    #+END_EXAMPLE
+
+  - look at the corresponding /Persistent Volume/:
+    #+BEGIN_SRC sh
+    kubectl get pv
+    #+END_SRC
+    #+BEGIN_EXAMPLE
+     NAME                                     CAPACITY ACCESS MODES RECLAIM POLICY STATUS CLAIM               STORAGECLASS REASON AGE 
+     pvc-b2bc560a-6b88-11e9-a6b2-525400a08028 10Gi     RWO          Delete         Bound  default/fedora28-dv local-path          5m20s
+    #+END_EXAMPLE
+
+  - watch the importer download the boot disk image and convert it
+    automatically, thanks to /Containerized Data Importer/ (CDI), so
+    that qemu can boot it:
+    #+BEGIN_SRC sh
+    kubectl logs -f -l cdi.kubevirt.io=importer -l cdi.kubevirt.io/storage.import.importPvcName=fedora28-dv
+    #+END_SRC
+
+    you'll be able to check the growth of the contents of the PVC, where the =disk.img= boot disk for qemu will be constructed:
+    #+BEGIN_SRC sh
+    du -sh /opt/local-path-provisioner/pvc-b2bc560a-6b88-11e9-a6b2-525400a08028/
+    #+END_SRC
+    #+BEGIN_EXAMPLE
+    277M /opt/local-path-provisioner/pvc-b2bc560a-6b88-11e9-a6b2-525400a08028/
+    #+END_EXAMPLE
+
+  - once the image is imported, watch the importer's logs:
+    #+BEGIN_SRC sh
+    kubectl logs -f -l kubevirt.io=virt-launcher
+    #+END_SRC
+
+- Finally, you can connect to the VM's console:
+  #+BEGIN_SRC sh
+      virtctl console testvmfedora29
+  #+END_SRC
+
+
+Note that you may also manage import of cloud images via the /Containerized Data Importer/ with:
+
+#+BEGIN_SRC sh
+wget http://cloud-images.ubuntu.com/releases/18.04/release/ubuntu-18.04-server-cloudimg-amd64.img
+mv ubuntu-18.04-server-cloudimg-amd64.img ubuntu-18.04-server-cloudimg-amd64.qcow2
+virtctl image-upload --pvc-name=upload-pvc --pvc-size=10Gi --image-path=ubuntu-18.04-server-cloudimg-amd64.qcow2 --uploadproxy-url=https://$(kubectl get service -n cdi cdi-uploadproxy -o wide | awk 'NR==2 {print $3}'):443/ --insecure
+#+END_SRC
+
+
+** Kata-containers
+
+You can also test, from inside the VM, the launch of containers inside "qemu sandboxing":
+
+#+BEGIN_SRC
+kubectl apply -f https://raw.githubusercontent.com/kata-containers/packaging/master/kata-deploy/examples/test-deploy-kata-qemu.yaml
+#+END_SRC
+
+Once the container is running, you can run a shell inside it:
+
+#+BEGIN_SRC
+kubectl exec -it $(kubectl get pod -l run=php-apache-kata-qemu -o wide | awk 'NR==2 {print $1}') bash
+#+END_SRC
+
+* Deploying a similar cluster on real OS
+
+The scripts may be used, in the same order, to deploy a cluster on an
+(non-virtualized) Ubuntu 18.04 Server machine.
+
+So far, only limitation found is related to AppArmor libvirt constraints
+preventing VMs to be started by KubeVirt.
+
+Immediate workaround can be disabling it (which may not be the best
+idea, YMMV):
+
+#+BEGIN_SRC
+    sudo ln -s /etc/apparmor.d/usr.sbin.libvirtd /etc/apparmor.d/disable/usr.sbin.libvirtd
+#+END_SRC
