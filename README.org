@@ -42,7 +42,10 @@ own findings.
 * Demo
 
 Here's a recording of the Vagrant provisionning of the cluster :
-[[https://asciinema.org/a/243325][[[https://asciinema.org/a/243325.png]]]]
+
+[[https://asciinema.org/a/243325.png]]
+
+*Play the recording: [[https://asciinema.org/a/243325]]*
 
 * Starting the cluster inside Vagrant
 
