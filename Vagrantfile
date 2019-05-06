@@ -20,8 +20,9 @@ DSTDIR = ENV['DSTDIR'] || "/home/vagrant/data"
 # Management 
 GROWPART = ENV['GROWPART'] || "true"
 
+#No longer supported
 # Minikube Variables
-KUBERNETES_VERSION = ENV['KUBERNETES_VERSION'] || "1.14.0"
+#KUBERNETES_VERSION = ENV['KUBERNETES_VERSION'] || "1.14.0"
 
 
 $growpart = <<SCRIPT
@@ -52,7 +53,8 @@ end
 
 def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
 
-  vmCfg.vm.box = "roboxes/ubuntu1804"
+  # Image is 64 Gb
+  vmCfg.vm.box = "generic/ubuntu1804"
   
   vmCfg.vm.hostname = hostname
   vmCfg.vm.network "private_network", type: "dhcp",  :model_type => "virtio", :autostart => true
@@ -86,13 +88,11 @@ def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
   vmCfg.vm.provision "shell", inline: $growpart, privileged: false if GROWPART == "true"
   vmCfg.vm.provision "shell", path: "crio.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kubernetes.sh", privileged: false 
-  vmCfg.vm.provision "shell", path: "kubevirt.sh", privileged: false 
-  vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
-  vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "kubevirt.sh", privileged: false
   vmCfg.vm.provision "shell", path: "rancher-local-path-provisioner.sh", privileged: false
   vmCfg.vm.provision "shell", path: "cdi.sh", privileged: false
-#  vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
-#  vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "kata.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "demo.sh", privileged: false 
   return vmCfg
 end
 

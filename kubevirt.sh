@@ -26,5 +26,11 @@ sudo mv virtctl /usr/local/bin/
 
 # wait until kubevirt is stated
 echo "wait for kubevirt to be started"
+#operator
+kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l kubevirt.io=virt-operator
+#api
+kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l kubevirt.io=virt-api
+#handler
 kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l kubevirt.io=virt-handler
-
+#controller
+kubectl wait --timeout=300s --for=condition=Ready -n kubevirt pod -l kubevirt.io=virt-controller
