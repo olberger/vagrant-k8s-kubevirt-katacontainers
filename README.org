@@ -19,8 +19,9 @@ Include configuration for :
 - the Ubuntu 18.04 Vagrant base image : =generic/ubuntu1804= (from
   https://roboxes.org/) run inside qemu/kvm
 - *Kubernetes* installed (/[[file:kubernetes.sh]]/) with =kubeadm=, with :
-  - the [[https://cri-o.io/][cri-o]] container runtime (other options
-    may be possible) : /[[file:crio.sh]]/
+  - the [[https://cri-o.io/][cri-o]] container runtime, which is supposed to be compatible
+    both with KubeVirt and KataContainers (other options
+    may be possible : containerd ?) : /[[file:crio.sh]]/
   - and kubelet and cri-o configured the same way, for using the systemd cgroups driver
   - the [[https://www.projectcalico.org/][Calico]] CNI network system
     (other options may be possible)
