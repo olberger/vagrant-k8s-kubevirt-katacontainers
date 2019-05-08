@@ -15,23 +15,24 @@ deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 sudo apt-get update
 sudo apt-get install -y docker.io 
-
-echo "Configure cgroups driver via systemd"
-cat <<EOF | sudo tee /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-EOF
+#exit 0
+#echo "Configure cgroups driver via systemd"
+#cat <<EOF | sudo tee /etc/docker/daemon.json
+#{
+#  "log-level": "debug",
+#  "exec-opts": ["native.cgroupdriver=systemd"],
+#  "log-driver": "json-file",
+#  "log-opts": {
+#    "max-size": "100m"
+#  },
+#  "storage-driver": "overlay2"
+#}
+#EOF
 
 # Restart docker.
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-
+#sudo systemctl daemon-reload
+#sudo systemctl restart docker
+#exit 0
 echo "Install kubeadm"
 sudo apt-get install -y kubeadm
 
@@ -47,7 +48,7 @@ sudo apt-get install -y kubeadm
 # Add docker.io registry of images
 echo "Configure container registries to include docker.io"
 #sudo sed -i 's/#registries = \[/registries = \["docker.io"\]/g' /etc/crio/crio.conf
-cat <<EOF |  sudo tee /etc/containers/registries.conf
+#cat <<EOF |  sudo tee /etc/containers/registries.conf
 # This is a system-wide configuration file used to
 # keep track of registries for various container backends.
 # It adheres to TOML format and does not support recursive
@@ -58,35 +59,37 @@ cat <<EOF |  sudo tee /etc/containers/registries.conf
 # The only valid categories are: 'registries.search', 'registries.insecure', 
 # and 'registries.block'.
 
-[registries.search]
-registries = ['docker.io']
+#[registries.search]
+#registries = ['docker.io']
 
 # If you need to access insecure registries, add the registry's fully-qualified name.
 # An insecure registry is one that does not have a valid SSL certificate or only does HTTP.
-[registries.insecure]
-registries = []
+#[registries.insecure]
+#registries = []
 
 
 # If you need to block pull access from a registry, uncomment the section below
 # and add the registries fully-qualified name.
 #
 # Docker only
-[registries.block]
-registries = []
-EOF
-sudo systemctl daemon-reload
-sudo systemctl restart crio
-
+#[registries.block]
+#registries = []
+#EOF
+#sudo systemctl daemon-reload
+#sudo systemctl restart crio
+#exit 0
 echo "Pulling container images for Kubernetes"
-sudo kubeadm config images pull --cri-socket=/var/run/crio/crio.sock
+#sudo kubeadm config images pull --cri-socket=/var/run/crio/crio.sock
+sudo kubeadm config images pull
 
 echo "Create cluster"
 # Install using kubeadm 
-IPADDR=`sudo ifconfig eth0 | grep netmask | awk '{print $2}'| cut -f2 -d:`
+IPADDR=`sudo ifconfig eno1 | grep netmask | awk '{print $2}'| cut -f2 -d:`
 NODENAME=$(hostname -s)
 #sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --cri-socket=/var/run/crio/crio.sock --pod-network-cidr=192.168.0.0/16
 sudo kubeadm init -v 5 --config kubelet-config.yaml --node-name $NODENAME
 sudo kubeadm init -v 5 --config kubeadmin-config.yaml
+#exit 0
 
 # Copy admin credentials to vagrant user
 mkdir -p $HOME/.kube
