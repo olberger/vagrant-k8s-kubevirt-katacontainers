@@ -83,13 +83,29 @@ echo "Pulling container images for Kubernetes"
 sudo kubeadm config images pull
 
 echo "Create cluster"
-# Install using kubeadm 
-IPADDR=`sudo ifconfig eno1 | grep netmask | awk '{print $2}'| cut -f2 -d:`
+# Install using kubeadm
+# First interface with default route set to it
+INTERFACE=$(sudo /sbin/route | grep '^default' | grep -o '[^ ]*$' | head -n 1)
+IPADDR=`sudo ifconfig $INTERFACE | grep netmask | awk '{print $2}'| cut -f2 -d:`
 NODENAME=$(hostname -s)
+
 #sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --cri-socket=/var/run/crio/crio.sock --pod-network-cidr=192.168.0.0/16
-sudo kubeadm init -v 5 --config kubelet-config.yaml --node-name $NODENAME
-sudo kubeadm init -v 5 --config kubeadmin-config.yaml
-#exit 0
+
+# The --cgroup-driver=systemd kubelet option being deprecated, we use the KubeletConfiguration config item to set it
+# but this forces us to get rid of other kubeadm options, which end up in the same config file
+cat <<EOF |  sudo tee /root/kubeadmin-config.yaml
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: ClusterConfiguration
+apiServer:
+  certSANs:
+  - "IPADDR"
+networking:
+  podSubnet: "192.168.0.0/16"
+
+EOF
+sudo sed -i "s/IPADDR/$IPADDR/g" /root/kubeadmin-config.yaml
+
+sudo kubeadm init -v 5 --config /root/kubeadmin-config.yaml --node-name $NODENAME
 
 # Copy admin credentials to vagrant user
 mkdir -p $HOME/.kube
