@@ -36,13 +36,14 @@ echo "Install kubeadm"
 sudo apt-get install -y kubeadm
 
 # Force use of systemd driver for cgroups since kubelet will use cri-o
-echo "Configure cgroup driver for kubelet"
-cat <<EOF |  sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd 
-EOF
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
+#echo "Configure cgroup driver for kubelet"
+#cat <<EOF |  sudo tee /etc/default/kubelet
+#KUBELET_EXTRA_ARGS=--cgroup-driver=systemd 
+#EOF
+#sudo systemctl daemon-reload
+#sudo systemctl restart kubelet
+#exit 0
+#
 # Add docker.io registry of images
 echo "Configure container registries to include docker.io"
 #sudo sed -i 's/#registries = \[/registries = \["docker.io"\]/g' /etc/crio/crio.conf
@@ -80,11 +81,40 @@ echo "Pulling container images for Kubernetes"
 sudo kubeadm config images pull --cri-socket=/var/run/crio/crio.sock
 
 echo "Create cluster"
-# Install using kubeadm 
-IPADDR=`sudo ifconfig eth0 | grep netmask | awk '{print $2}'| cut -f2 -d:`
+# Install using kubeadm
+# First interface with default route set to it
+INTERFACE=$(sudo /sbin/route | grep '^default' | grep -o '[^ ]*$' | head -n 1)
+IPADDR=`sudo ifconfig $INTERFACE | grep netmask | awk '{print $2}'| cut -f2 -d:`
 NODENAME=$(hostname -s)
-sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --cri-socket=/var/run/crio/crio.sock --pod-network-cidr=192.168.0.0/16
 
+#sudo kubeadm init --apiserver-cert-extra-sans=$IPADDR  --node-name $NODENAME --cri-socket=/var/run/crio/crio.sock --pod-network-cidr=192.168.0.0/16
+
+# The --cgroup-driver=systemd kubelet option being deprecated, we use the KubeletConfiguration config item to set it
+# but this forces us to get rid of other kubeadm options, which end up in the same config file
+cat <<EOF |  sudo tee /root/kubeadmin-config.yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: "systemd"
+
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: ClusterConfiguration
+apiServer:
+  certSANs:
+  - "IPADDR"
+networking:
+  podSubnet: "192.168.0.0/16"
+
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: "unix:///var/run/crio/crio.sock"
+
+EOF
+sudo sed -i "s/IPADDR/$IPADDR/g" /root/kubeadmin-config.yaml
+
+sudo kubeadm init -v 5 --config /root/kubeadmin-config.yaml --node-name $NODENAME
 
 # Copy admin credentials to vagrant user
 mkdir -p $HOME/.kube
