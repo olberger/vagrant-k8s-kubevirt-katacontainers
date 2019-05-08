@@ -1,8 +1,7 @@
-#+TITLE: Kubernetes with kubevirt and kata-containers, inside Vagrant (with libvirt/kvm)
+#+TITLE: Kubernetes with kubevirt +and kata-containers+, inside Vagrant (with libvirt/kvm)
 
 Provide a consistent way to run [[https://kubernetes.io/][Kubernetes]]
-(k8s) with [[https://kubevirt.io/][KubeVirt]] and
-[[https://katacontainers.io/][Kata Containers]], locally, provided
+(k8s) with [[https://kubevirt.io/][KubeVirt]] +and [[https://katacontainers.io/][Kata Containers]]+, locally, provided
 [[#nestedvirt][nested virtualization]] is supported.
 
 Note, this installs Kubernetes from "official" (from k8s) packages on
@@ -19,10 +18,12 @@ Include configuration for :
 - the Ubuntu 18.04 Vagrant base image : =generic/ubuntu1804= (from
   https://roboxes.org/) run inside qemu/kvm
 - *Kubernetes* installed (/[[file:kubernetes.sh]]/) with =kubeadm=, with :
-  - the [[https://cri-o.io/][cri-o]] container runtime, which is supposed to be compatible
+  - +the [[https://cri-o.io/][cri-o]] container runtime+, which is supposed to be compatible
     both with KubeVirt and KataContainers (other options
     may be possible : containerd ?) : /[[file:crio.sh]]/
-  - and kubelet and cri-o configured the same way, for using the systemd cgroups driver
+    IN THIS BRANCH, docker is used instead of cri-o whose support
+    seems broken, so no Kata-Containers for the moment :-(
+  - +and kubelet and cri-o configured the same way, for using the systemd cgroups driver+
   - the [[https://www.projectcalico.org/][Calico]] CNI network system
     (other options may be possible)
   - Rancher's [[https://github.com/rancher/local-path-provisioner][Local Path Provisioner]] 
@@ -32,8 +33,7 @@ Include configuration for :
     *cloud VMs* on the cluster via qemu/kvm (in a similar way to IaaS clouds) : /[[file:kubevirt.sh]]/
   - the [[https://github.com/kubevirt/containerized-data-importer][Containerized Data Importer]] 
     for KubeVirt, to handle automatic import of VM images: /[[file:cdi.sh]]/
-  - [[https://katacontainers.io/][Kata Containers]] for running *PODs/containers*, sandboxed inside mini VMs
-    (qemu too): /[[file:kata.sh]]/
+  - +[[https://katacontainers.io/][Kata Containers]] for running *PODs/containers*, sandboxed inside mini VMs (qemu too): /[[file:kata.sh]]/+
 
 This is a reworked Vagrant setup, based on an initial version at
 https://github.com/mintel/vagrant-minikube, taking additions from
