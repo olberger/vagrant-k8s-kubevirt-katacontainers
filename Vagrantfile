@@ -86,8 +86,10 @@ def configureVM(vmCfg, hostname, cpus, mem, srcdir, dstdir)
 
   # Script to prepare the VM
   vmCfg.vm.provision "shell", inline: $growpart, privileged: false if GROWPART == "true"
-  vmCfg.vm.provision "shell", path: "crio.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "docker.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "containerd.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kubernetes.sh", privileged: false 
+  vmCfg.vm.provision "shell", path: "calico.sh", privileged: false 
   vmCfg.vm.provision "shell", path: "kubevirt.sh", privileged: false
   vmCfg.vm.provision "shell", path: "rancher-local-path-provisioner.sh", privileged: false
   vmCfg.vm.provision "shell", path: "cdi.sh", privileged: false
