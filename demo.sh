@@ -7,7 +7,7 @@ echo "Log in inside the VM with 'vagrant ssh' and do some tests"
 echo "."
 echo "Test kata-containers with :"
 echo "- start deployment of a test app:"
-echo "  kubectl apply -f https://raw.githubusercontent.com/olberger/vagrant-kata-containerd/master/nginx-untrusted.yaml
+echo "  kubectl apply -f https://raw.githubusercontent.com/olberger/vagrant-kata-containerd/master/nginx-untrusted.yaml"
 echo "- wait until it's deployed:"
 echo "  kubectl wait --timeout=180s --for=condition=Ready pod nginx-untrusted"
 echo "- execute 'uname -a' inside the VM:"
