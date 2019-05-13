@@ -65,6 +65,38 @@ support is essential.
 - Check that you have support for this in your CPU
 - Check that the KVM modules are configured to allow it
 
+Borrowing here [[http://www.brianlinkletter.com/install-antidote-nre-labs-network-emulator-linux/][instructions written by Brian Linkletter]]:
+
+*Check for virtualization support*
+
+Verify your computer has hardware support for virtualization. Enter the following commands in the VM’s terminal.
+
+#+BEGIN_SRC sh
+grep -cw vmx /proc/cpuinfo
+#+END_SRC
+
+It should return a value equal to the number of virtual cores on your processor. If it returns 0, then something is wrong.
+
+We need to use nested virtualization because we are running network nodes inside a VM created by Antidote. Check the nested virtualization settings on the host computer:
+
+#+BEGIN_SRC sh
+cat /sys/module/kvm_intel/parameters/nested
+#+END_SRC
+
+The output should be “Y”. If it is “N”, run the following commands to enable nested virtualization:
+
+#+BEGIN_SRC sh
+sudo modprobe -r kvm_intel
+sudo modprobe kvm_intel nested=1
+#+END_SRC
+
+To make the changes persistent after a reboot, edit the file =/etc/modprobe.d/kvm.conf= and modify the following line to:
+
+#+BEGIN_SRC sh
+echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/kvm.conf
+#+END_SRC
+
+
 *** Vagrant
 
 Ensure you have vagrant installed, with its libvirt/KVM virtualization
