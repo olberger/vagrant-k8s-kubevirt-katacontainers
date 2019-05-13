@@ -47,9 +47,10 @@ sudo mkdir -p /etc/containerd
 # sudo sed -i 's/systemd_cgroup = false/systemd_cgroup = true/g' /etc/containerd/config.toml
 # TODO: backup olf file if already there
 # Specify the systemd cgroups driver here too
+
+# [debug]
+#   level = "info"
 cat  <<EOF | sudo tee /etc/containerd/config.toml
-[debug]
-  level = "info"
 [plugins]
   [plugins.cri]
     systemd_cgroup = true

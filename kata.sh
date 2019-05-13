@@ -36,10 +36,11 @@ echo -ne $(print_progress 1) "${GREEN}Done.${NC}\n"
 # Now, configure the Kata runtime
 # This should be the "modern" way of doing so compatible with the runtimeClasses recently introduced in k8s
 
+# [debug]
+#   level = "info"
+
 # We reuse the values previously set in the config file, and add the kata stuff
 cat  <<EOF | sudo tee /etc/containerd/config.toml
-[debug]
-  level = "info"
 [plugins]
   [plugins.cri]
     systemd_cgroup = true
